@@ -1,21 +1,24 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { SplitFlap } from "./SplitFlap";
+import { useMemo, useState } from "react";
 
 export interface BoardRow {
-  flight: string;
-  date: string;
-  time: string;
-  destination: string;
-  gate: string;
-  remark: string;
+  ref: string;
+  appliedAt: number;
+  appliedDate: string;
+  appliedTime: string;
+  updatedAt: number;
+  updated: string;
+  category: string;
+  pay: string;
+  status: string;
   lamp: string;
+  /** Position in the pipeline, used for sorting by status */
+  stageOrder: number;
   group: "air" | "connected" | "closed";
 }
 
-const ROWS_PER_PAGE = 10;
-const PAGE_SECONDS = 14;
+const PAGE_SIZE = 15;
 
 const FILTERS = [
   { id: "all", label: "All" },
@@ -25,104 +28,180 @@ const FILTERS = [
 ] as const;
 
 type FilterId = (typeof FILTERS)[number]["id"];
+type SortKey = "appliedAt" | "category" | "pay" | "stageOrder" | "updatedAt";
 
-const COLUMNS = [
-  { key: "date", label: "Applied", width: 6, className: "col--date" },
-  { key: "time", label: "Time", width: 5, className: "col--time" },
-  { key: "flight", label: "Ref #", width: 5, className: "col--flight" },
-  { key: "destination", label: "Job category", width: 24, className: "col--dest" },
-  { key: "gate", label: "Pay type", width: 6, className: "col--gate" },
-  { key: "remark", label: "Status", width: 9, className: "col--remark" },
-] as const;
+const COLUMNS: { key: SortKey | "ref"; label: string; className?: string }[] = [
+  { key: "appliedAt", label: "Applied" },
+  { key: "category", label: "Job category" },
+  { key: "pay", label: "Pay type" },
+  { key: "stageOrder", label: "Status" },
+  { key: "updatedAt", label: "Last update" },
+  { key: "ref", label: "Ref #", className: "cell--ref" },
+];
 
 export function Board({ rows }: { rows: BoardRow[] }) {
   const [filter, setFilter] = useState<FilterId>("all");
+  const [category, setCategory] = useState("all");
+  const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "appliedAt", dir: -1 });
   const [page, setPage] = useState(0);
-  const [paused, setPaused] = useState(false);
 
-  const visible = useMemo(() => (filter === "all" ? rows : rows.filter((r) => r.group === filter)), [rows, filter]);
-  const pages = Math.max(1, Math.ceil(visible.length / ROWS_PER_PAGE));
+  const categories = useMemo(() => [...new Set(rows.map((r) => r.category))].sort(), [rows]);
+
+  const inCategory = useMemo(
+    () => (category === "all" ? rows : rows.filter((r) => r.category === category)),
+    [rows, category]
+  );
+
+  const counts = useMemo(() => {
+    const c: Record<FilterId, number> = { all: inCategory.length, air: 0, connected: 0, closed: 0 };
+    for (const r of inCategory) c[r.group]++;
+    return c;
+  }, [inCategory]);
+
+  const visible = useMemo(() => {
+    const filtered = filter === "all" ? inCategory : inCategory.filter((r) => r.group === filter);
+    return [...filtered].sort((a, b) => {
+      const x = a[sort.key];
+      const y = b[sort.key];
+      const cmp = typeof x === "number" && typeof y === "number" ? x - y : String(x).localeCompare(String(y));
+      return cmp * sort.dir || b.appliedAt - a.appliedAt;
+    });
+  }, [inCategory, filter, sort]);
+
+  const pages = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
   const current = Math.min(page, pages - 1);
+  const start = current * PAGE_SIZE;
+  const pageRows = visible.slice(start, start + PAGE_SIZE);
 
-  // Real boards cycle through pages on their own
-  useEffect(() => {
-    if (paused || pages < 2) return;
-    const id = setInterval(() => setPage((p) => (p + 1) % pages), PAGE_SECONDS * 1000);
-    return () => clearInterval(id);
-  }, [pages, paused]);
-
-  const pageRows = visible.slice(current * ROWS_PER_PAGE, (current + 1) * ROWS_PER_PAGE);
-  const padded = [...pageRows, ...Array(ROWS_PER_PAGE - pageRows.length).fill(null)] as (BoardRow | null)[];
+  function toggleSort(key: SortKey) {
+    setSort((s) => (s.key === key ? { key, dir: s.dir === 1 ? -1 : 1 } : { key, dir: key === "appliedAt" || key === "updatedAt" ? -1 : 1 }));
+    setPage(0);
+  }
 
   return (
-    <section className="board" aria-label="My Upwork proposals">
-      <p className="board__caption">
-        Each row is a proposal I sent on Upwork: when I applied, the job category, how it pays, and where it stands now.
-      </p>
-      <div className="board__controls">
-        <div className="board__filters" role="tablist" aria-label="Filter flights">
+    <section className="proposals" aria-labelledby="proposals-title">
+      <div className="proposals__head">
+        <h2 id="proposals-title" className="section-sign">
+          <span className="section-sign__num">
+            <svg viewBox="0 0 48 48" aria-hidden="true">
+              <path d="M41.6 14.2c-.7-1.6-2.6-2.3-4.2-1.6L29 16.5 16.8 10.8l-3.6 1.6 8.4 7.3-7.4 3.4-4.4-2.4-2.8 1.3 4.6 6.5c.5.7 1.5 1 2.3.6l26.1-12.1c1.6-.7 2.3-2.6 1.6-4.2z" />
+            </svg>
+          </span>
+          Proposals
+        </h2>
+        <label className="select">
+          <span className="visually-hidden">Job category</span>
+          <select
+            value={category}
+            onChange={(e) => {
+              setCategory(e.target.value);
+              setPage(0);
+            }}
+          >
+            <option value="all">All categories</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="table-card">
+        <div className="tabs" role="tablist" aria-label="Filter by status">
           {FILTERS.map((f) => (
             <button
               key={f.id}
               role="tab"
               aria-selected={filter === f.id}
-              className="key"
+              className="tab"
               onClick={() => {
                 setFilter(f.id);
                 setPage(0);
               }}
             >
               {f.label}
+              <span className="tab__count">{counts[f.id]}</span>
             </button>
           ))}
         </div>
-        <div className="board__pager">
-          <button className="key key--icon" aria-label="Previous page" onClick={() => setPage((current - 1 + pages) % pages)}>
-            ◂
-          </button>
-          <button
-            className="key key--icon"
-            aria-label={paused ? "Resume page rotation" : "Pause page rotation"}
-            onClick={() => setPaused((p) => !p)}
-          >
-            {paused ? "▸" : "❚❚"}
-          </button>
-          <button className="key key--icon" aria-label="Next page" onClick={() => setPage((current + 1) % pages)}>
-            ▸
-          </button>
-        </div>
-      </div>
 
-      <div className="board__housing">
-        <div className="board__row board__row--head" aria-hidden="true">
-          <span className="lamp lamp--off" />
-          {COLUMNS.map((c) => (
-            <span key={c.key} className={`board__label ${c.className}`} style={{ "--chars": c.width } as React.CSSProperties}>
-              {c.label}
-            </span>
-          ))}
-        </div>
-
-        <ol className="board__rows">
-          {padded.map((row, i) => (
-            <li key={i} className="board__row">
-              <span className={`lamp lamp--${row?.lamp ?? "off"}`} aria-hidden="true" />
-              {COLUMNS.map((c) => (
-                <SplitFlap
-                  key={c.key}
-                  text={row ? row[c.key] : ""}
-                  width={c.width}
-                  delay={i * 90}
-                  className={`${c.className} ${c.key === "remark" && row ? `remark--${row.lamp}` : ""}`}
-                />
+        <div className="table-scroll">
+          <table className="table">
+            <thead>
+              <tr>
+                {COLUMNS.map((c) => (
+                  <th
+                    key={c.key}
+                    className={c.className}
+                    aria-sort={sort.key === c.key ? (sort.dir === 1 ? "ascending" : "descending") : undefined}
+                  >
+                    {c.key === "ref" ? (
+                      c.label
+                    ) : (
+                      <button className="sort" onClick={() => toggleSort(c.key as SortKey)}>
+                        {c.label}
+                        <span className="sort__arrow" aria-hidden="true">
+                          {sort.key === c.key ? (sort.dir === 1 ? "▲" : "▼") : "↕"}
+                        </span>
+                      </button>
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {pageRows.map((r) => (
+                <tr key={r.ref}>
+                  <td data-label="Applied">
+                    <span className="cell__main">{r.appliedDate}</span>
+                    <span className="cell__sub">{r.appliedTime}</span>
+                  </td>
+                  <td data-label="Job category" className="cell--category">
+                    {r.category}
+                  </td>
+                  <td data-label="Pay type">{r.pay}</td>
+                  <td data-label="Status">
+                    <span className={`pill pill--${r.lamp}`}>
+                      <span className="pill__dot" aria-hidden="true" />
+                      {r.status}
+                    </span>
+                  </td>
+                  <td data-label="Last update" className="cell--muted">
+                    {r.updated}
+                  </td>
+                  <td data-label="Ref #" className="cell--ref">
+                    {r.ref}
+                  </td>
+                </tr>
               ))}
-            </li>
-          ))}
-        </ol>
+              {pageRows.length === 0 && (
+                <tr>
+                  <td colSpan={COLUMNS.length} className="table__empty">
+                    No proposals match these filters.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
 
-        <div className="board__footer">
-          <SplitFlap text={`PAGE ${current + 1} OF ${pages}`} width={12} delay={400} />
-          <span className="board__count">{visible.length} proposals</span>
+        <div className="pager">
+          <span className="pager__range">
+            {visible.length === 0 ? "0" : `${start + 1}–${start + pageRows.length}`} of {visible.length}
+          </span>
+          <div className="pager__buttons">
+            <button className="key key--icon" aria-label="Previous page" disabled={current === 0} onClick={() => setPage(current - 1)}>
+              ‹
+            </button>
+            <span className="pager__page">
+              Page {current + 1} of {pages}
+            </span>
+            <button className="key key--icon" aria-label="Next page" disabled={current >= pages - 1} onClick={() => setPage(current + 1)}>
+              ›
+            </button>
+          </div>
         </div>
       </div>
     </section>

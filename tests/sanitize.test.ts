@@ -48,13 +48,11 @@ describe("sanitize", () => {
     );
   });
 
-  it("abbreviates long categories without cutting words", () => {
-    const dest = (category: string) => sanitize([{ ...base, category }], "s")[0].destination;
-    expect(dest("Web, Mobile & Software Dev")).toBe("WEB, MOBILE/SOFTWARE DEV");
-    expect(dest("Engineering & Architecture")).toBe("ENGINEERING/ARCHITECTURE");
-    expect(dest("Customer Service & Support Operations")).toBe("CUSTOMER SERVICE/SUPPORT");
-    expect(dest("Design & Creative")).toBe("DESIGN & CREATIVE");
-    expect(sanitize([{ ...base, category: null }], "s")[0].destination).toBe("GENERAL");
+  it("keeps category names readable and falls back to General", () => {
+    const dest = (category: string | null) => sanitize([{ ...base, category }], "s")[0].destination;
+    expect(dest("Web, Mobile & Software Dev")).toBe("Web, Mobile & Software Dev");
+    expect(dest("  Design &   Creative ")).toBe("Design & Creative");
+    expect(dest(null)).toBe("General");
   });
 
   it("maps contract types to pay types", () => {

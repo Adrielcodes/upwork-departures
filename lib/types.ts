@@ -23,7 +23,7 @@ export interface Flight {
   /** Last status change, rounded down to the hour */
   updatedAt: string;
   stage: Stage;
-  /** Upwork job category, e.g. "WEB, MOBILE & SOFTWARE DEV" */
+  /** Upwork job category, e.g. "Web, Mobile & Software Dev" */
   destination: string;
   gate: Gate;
   /** null when Upwork didn't report it */

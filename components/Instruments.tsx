@@ -94,7 +94,7 @@ export function RouteMap({ stops }: { stops: RouteStop[] }) {
           <span className="route__code">{stop.code}</span>
           <span className="route__label">{stop.label}</span>
           <span className="route__count">{stop.count}</span>
-          <span className="route__share">{i === 0 ? "departed" : `${pct(stop.count / first)} of departures`}</span>
+          <span className="route__share">{i === 0 ? "proposals" : `${pct(stop.count / first)} of sent`}</span>
         </li>
       ))}
     </ol>

@@ -64,7 +64,7 @@ export function demoSnapshot(now = new Date()): Snapshot {
       id: `demo-${i}`,
       status,
       createdDateTime: created.toISOString(),
-      modifiedDateTime: new Date(created.getTime() + Math.floor(rand() * 5) * 86_400_000).toISOString(),
+      modifiedDateTime: new Date(Math.min(now.getTime(), created.getTime() + Math.floor(rand() * 5) * 86_400_000)).toISOString(),
       category: pick(rand, CATEGORIES),
       contractType: rand() < 0.62 ? "FIXED" : "HOURLY",
       viewedByClient: engaged || rand() < 0.38,

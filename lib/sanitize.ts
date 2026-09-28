@@ -13,8 +13,6 @@ export interface RawProposal {
   viewedByClient?: boolean | null;
 }
 
-const DESTINATION_WIDTH = 24;
-
 /** Round down to the hour so exact submission times can't be matched to a job post. */
 function toHour(iso: string): string {
   const d = new Date(iso);
@@ -34,14 +32,7 @@ function gate(contractType?: string | null): Gate {
 }
 
 function destination(category?: string | null): string {
-  const name = (category ?? "General").toUpperCase().replace(/\s+/g, " ").trim();
-  if (name.length <= DESTINATION_WIDTH) return name;
-  // Abbreviate like a real board: "ENGINEERING & ARCHITECTURE" → "ENGINEERING/ARCHITECTURE"
-  const short = name.replace(/ & /g, "/");
-  if (short.length <= DESTINATION_WIDTH) return short;
-  // Still too long: drop whole words, never cut mid-word
-  const cut = short.slice(0, DESTINATION_WIDTH + 1).lastIndexOf(" ");
-  return short.slice(0, cut > 0 ? cut : DESTINATION_WIDTH).replace(/[\s,/]+$/, "");
+  return (category ?? "").replace(/\s+/g, " ").trim() || "General";
 }
 
 export function sanitize(raw: RawProposal[], salt: string): Flight[] {
@@ -61,5 +52,3 @@ export function sanitize(raw: RawProposal[], salt: string): Flight[] {
   }
   return flights.sort((a, b) => b.departedAt.localeCompare(a.departedAt));
 }
-
-export { DESTINATION_WIDTH };

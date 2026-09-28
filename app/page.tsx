@@ -1,5 +1,5 @@
 import { Board, type BoardRow } from "@/components/Board";
-import { Clock, SoundToggle } from "@/components/Chrome";
+import { Clock } from "@/components/Chrome";
 import { BoardingPass, Dial, FlightLog, Odometer, RouteMap } from "@/components/Instruments";
 import { loadSnapshot } from "@/lib/snapshot";
 import { STAGES, STAGE_ORDER } from "@/lib/stages";
@@ -11,24 +11,40 @@ export const revalidate = 3600;
 
 const TIME_ZONE = process.env.NEXT_PUBLIC_BOARD_TZ || "America/New_York";
 
-function toRow(f: Flight): BoardRow {
-  const d = new Date(f.departedAt);
+const PAY_LABEL: Record<Flight["gate"], string> = { HOURLY: "Hourly", FIXED: "Fixed", "": "—" };
+
+function relative(iso: string, now: Date): string {
+  const days = Math.floor((now.getTime() - Date.parse(iso)) / 86_400_000);
+  if (days <= 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 14) return `${days} days ago`;
+  if (days < 60) return `${Math.floor(days / 7)} weeks ago`;
+  return new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, month: "short", day: "numeric" }).format(new Date(iso));
+}
+
+function toRow(f: Flight, now: Date): BoardRow {
+  const applied = new Date(f.departedAt);
   const info = STAGES[f.stage];
   return {
-    flight: f.flight,
-    date: new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, month: "short", day: "2-digit" }).format(d),
-    time: new Intl.DateTimeFormat("en-GB", { timeZone: TIME_ZONE, hour: "2-digit", minute: "2-digit", hour12: false }).format(d),
-    destination: f.destination,
-    gate: f.gate,
-    remark: info.remark,
+    ref: f.flight,
+    appliedAt: applied.getTime(),
+    appliedDate: new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, month: "short", day: "numeric", year: "numeric" }).format(applied),
+    appliedTime: new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, hour: "numeric" }).format(applied),
+    updatedAt: Date.parse(f.updatedAt),
+    updated: relative(f.updatedAt, now),
+    category: f.destination,
+    pay: PAY_LABEL[f.gate],
+    status: info.label,
     lamp: info.lamp,
+    stageOrder: STAGE_ORDER.indexOf(f.stage),
     group: info.connected ? "connected" : info.closed ? "closed" : "air",
   };
 }
 
 export default async function Page() {
   const snapshot = await loadSnapshot();
-  const stats = computeStats(snapshot.flights);
+  const now = new Date();
+  const stats = computeStats(snapshot.flights, now);
   const isDemo = snapshot.source === "demo";
   const updated = new Intl.DateTimeFormat("en-US", {
     timeZone: TIME_ZONE,
@@ -54,7 +70,6 @@ export default async function Page() {
           </div>
           <div className="sign__right">
             <Clock timeZone={TIME_ZONE} />
-            <SoundToggle />
           </div>
         </div>
       </header>
@@ -73,8 +88,6 @@ export default async function Page() {
       )}
 
       <main className="terminal">
-        <Board rows={snapshot.flights.map(toRow)} />
-
         <section className="deck" aria-labelledby="deck-title">
           <h2 id="deck-title" className="section-sign">
             <span className="section-sign__num">A</span> Flight deck
@@ -84,9 +97,11 @@ export default async function Page() {
             <Dial value={stats.hireRate} scaleMax={0.2} label="Hire rate" caption={`${stats.hired} landed`} />
             {stats.viewRate !== null && <Dial value={stats.viewRate} label="Viewed" caption="Opened by the client" />}
             <Odometer value={stats.last30} label="Sent" caption="Last 30 days" />
-            <Odometer value={stats.inTheAir} label="Waiting" caption="Proposals waiting on a reply" />
+            <Odometer value={stats.inTheAir} label="Waiting" caption="Waiting on a reply" />
           </div>
         </section>
+
+        <Board rows={snapshot.flights.map((f) => toRow(f, now))} />
 
         <section className="panel" aria-labelledby="route-title">
           <h2 id="route-title" className="section-sign">
@@ -112,13 +127,16 @@ export default async function Page() {
 
         <section className="panel" aria-labelledby="legend-title">
           <h2 id="legend-title" className="section-sign">
-            <span className="section-sign__num">E</span> Reading the board
+            <span className="section-sign__num">E</span> What the statuses mean
           </h2>
           <ul className="legend">
             {STAGE_ORDER.map((s) => (
               <li key={s}>
                 <span className={`lamp lamp--${STAGES[s].lamp}`} aria-hidden="true" />
-                <span className="legend__remark">{STAGES[s].remark}</span>
+                <span className={`pill pill--${STAGES[s].lamp}`}>
+                  <span className="pill__dot" aria-hidden="true" />
+                  {STAGES[s].label}
+                </span>
                 <span className="legend__meaning">{STAGES[s].meaning}</span>
               </li>
             ))}

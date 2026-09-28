@@ -1,31 +1,31 @@
 # ✈ Departures
 
-**Every Upwork proposal I send, shown as a flight on a split-flap airport departures board.**
+**A dashboard for every Upwork proposal I send, styled like an airport terminal.**
 
 **▶ Live board: https://upwork-departures.vercel.app**
 
 ![Departures board](docs/screenshot.png)
 
-Freelancing on Upwork means sending a lot of proposals into the void. I wanted to see where they actually go: which ones get a reply, which categories convert, and how my weekly volume is trending. So I built a dashboard, and instead of another grid of cards I built an airport terminal.
+Freelancing on Upwork means sending a lot of proposals into the void. I wanted to see where they actually go: which ones get a reply, which categories convert, and how my weekly volume is trending. So I built a dashboard that looks like an airport terminal but still reads like a normal dashboard.
 
 ## What's on the board
 
-- **Split-flap departures board:** each row is a proposal, with plain columns (applied, ref #, job category, pay type, status). Every character spins through a real flap drum (`A→B→C…`) until it lands, rows cascade, and pages turn on their own like a real Solari board. There's an optional synthesized flap-clatter sound (Web Audio, no audio files).
+- **Proposals table:** when I applied, job category, pay type, status, and last update. Filter by status (with counts) or category, sort any column, and page through results. On phones each proposal becomes a compact card.
 - **Flight deck:** cockpit dials for reply rate, hire rate, and view rate, plus mechanical odometers. Set in [B612](https://b612-font.com/), the typeface Airbus designed for cockpit displays.
 - **Route map:** the funnel (sent → viewed → replied → offer → hired) drawn as a flight route with stopovers.
 - **Flight log:** weekly volume as altitude bars, with replies filled in.
 - **Boarding pass:** the job category with my best reply rate.
 
-| Status on the board | Upwork status | Meaning |
+| Status | Upwork status | Meaning |
 |---|---|---|
-| PENDING | `Pending` | Just sent, Upwork is still processing it |
-| WAITING | `Accepted` | Sent, waiting to hear back (for freelancers, "Accepted" means Upwork accepted the submission, not the client) |
-| REPLIED | `Activated` | Client started a conversation |
-| OFFER | `Offered` | Client sent an offer |
-| HIRED | `Hired` | Won the job |
-| DECLINED | `Declined` | Client passed |
-| NO REPLY | `Archived` | Job closed without a response |
-| WITHDRAWN | `Withdrawn` | I pulled the proposal |
+| Pending | `Pending` | Just sent, Upwork is still processing it |
+| Waiting | `Accepted` | Sent, waiting to hear back (for freelancers, "Accepted" means Upwork accepted the submission, not the client) |
+| Replied | `Activated` | Client started a conversation |
+| Offer | `Offered` | Client sent an offer |
+| Hired | `Hired` | Won the job |
+| Declined | `Declined` | Client passed |
+| No reply | `Archived` | Job closed without a response |
+| Withdrawn | `Withdrawn` | I pulled the proposal |
 
 ## Public board, private data
 
@@ -76,15 +76,13 @@ The first sync runs immediately, then daily via Vercel Cron. To sync manually, v
 ## Project structure
 
 ```
-app/page.tsx            The terminal: board, flight deck, route, log, boarding pass
+app/page.tsx            The dashboard: flight deck, proposals table, route, log, boarding pass
 app/api/connect         Starts Upwork OAuth (owner only)
 app/api/callback        Saves tokens, runs the first sync
 app/api/sync            Daily sync (Vercel Cron) or manual with ?key=
-components/SplitFlap    The flap-drum animation
-components/Board        Paging, filters, status lamps
+components/Board        Proposals table: filters, sorting, paging
 components/Instruments  Dials, odometers, route map, flight log, boarding pass
 lib/upwork.ts           OAuth + GraphQL client
 lib/sanitize.ts         The privacy filter
 lib/stats.ts            Rates, funnel, weekly volume
-lib/sound.ts            Synthesized flap clatter
 ```
