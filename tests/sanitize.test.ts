@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { sanitize, type RawProposal } from "@/lib/sanitize";
-import { computeStats } from "@/lib/stats";
+import { computeStats, weeklyActivity } from "@/lib/stats";
 import { demoSnapshot } from "@/lib/demo";
 
 const base: RawProposal = {
@@ -64,23 +64,38 @@ describe("sanitize", () => {
 });
 
 describe("computeStats", () => {
-  it("computes rates, ignoring proposals still in check-in", () => {
-    const statuses = ["Pending", "Accepted", "Accepted", "Activated", "Hired", "Declined", "Archived", "Archived"];
-    const flights = sanitize(
+  const now = new Date("2026-09-27T12:00:00Z");
+  const flightsFor = (statuses: string[]) =>
+    sanitize(
       statuses.map((status, i) => ({ ...base, id: String(i), status, viewedByClient: i % 2 === 0 })),
       "s"
     );
-    const stats = computeStats(flights, new Date("2026-09-27T12:00:00Z"));
-    expect(stats.total).toBe(7);
+
+  it("computes rates, ignoring proposals Upwork is still processing", () => {
+    const stats = computeStats(
+      flightsFor(["Pending", "Accepted", "Accepted", "Activated", "Hired", "Declined", "Archived", "Archived"]),
+      now
+    );
+    expect(stats.total).toBe(8);
+    expect(stats.sent).toBe(7);
     expect(stats.connected).toBe(2);
     expect(stats.hired).toBe(1);
+    expect(stats.waiting).toBe(3);
     expect(stats.connectRate).toBeCloseTo(2 / 7);
-    expect(stats.route.map((r) => r.code)).toEqual(["SNT", "VWD", "RPL", "OFR", "HRD"]);
+    expect(stats.funnel.map((s) => s.label)).toEqual(["Sent", "Viewed", "Replied", "Offer", "Hired"]);
+    expect(stats.oldestWaitingDays).toBe(6);
   });
 
-  it("hides the Viewed stop when Upwork doesn't report views", () => {
+  it("hides the Viewed step when Upwork doesn't report views", () => {
     const flights = sanitize([{ ...base, viewedByClient: null }], "s");
-    expect(computeStats(flights).route.map((r) => r.code)).not.toContain("VWD");
+    expect(computeStats(flights).funnel.map((s) => s.label)).not.toContain("Viewed");
+  });
+
+  it("buckets proposals into weeks", () => {
+    const weeks = weeklyActivity(flightsFor(["Accepted", "Activated"]), 4, now);
+    expect(weeks).toHaveLength(4);
+    expect(weeks.reduce((n, w) => n + w.sent, 0)).toBe(2);
+    expect(weeks.reduce((n, w) => n + w.connected, 0)).toBe(1);
   });
 });
 

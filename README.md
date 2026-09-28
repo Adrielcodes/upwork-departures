@@ -1,20 +1,22 @@
 # ✈ Departures
 
-**A dashboard for every Upwork proposal I send, styled like an airport terminal.**
+**A dashboard for every Upwork proposal I send: reply rate, funnel, weekly activity, and the status of each proposal.**
 
-**▶ Live board: https://upwork-departures.vercel.app**
+**▶ Live dashboard: https://upwork-departures.vercel.app**
 
-![Departures board](docs/screenshot.png)
+![Departures dashboard](docs/screenshot.png)
 
-Freelancing on Upwork means sending a lot of proposals into the void. I wanted to see where they actually go: which ones get a reply, which categories convert, and how my weekly volume is trending. So I built a dashboard that looks like an airport terminal but still reads like a normal dashboard.
+Freelancing on Upwork means sending a lot of proposals and not always knowing what's working. This dashboard answers the questions I actually have: How many am I sending? How many get a reply? Which job categories respond best? What's still waiting?
 
-## What's on the board
+## What's on the dashboard
 
-- **Proposals table:** when I applied, job category, pay type, status, and last update. Filter by status (with counts) or category, sort any column, and page through results. On phones each proposal becomes a compact card.
-- **Flight deck:** cockpit dials for reply rate, hire rate, and view rate, plus mechanical odometers. Set in [B612](https://b612-font.com/), the typeface Airbus designed for cockpit displays.
-- **Route map:** the funnel (sent → viewed → replied → offer → hired) drawn as a flight route with stopovers.
-- **Flight log:** weekly volume as altitude bars, with replies filled in.
-- **Boarding pass:** the job category with my best reply rate.
+- **Filters** for date range (30 days, 90 days, 12 months, all time) and job category. Every number, chart, and table row below updates together.
+- **Key numbers:** proposals sent, reply rate, hires, and proposals waiting on a reply, each compared with the previous period.
+- **Weekly activity:** proposals sent per week, split by whether they got a reply.
+- **Funnel:** sent → viewed → replied → offer → hired.
+- **Reply rate by category** and a **status breakdown**.
+- **Proposals table:** status tabs with counts, sortable columns, and paging. On phones, each proposal becomes a compact card.
+- Light and dark mode, keyboard-accessible chart tooltips, and a color palette checked for color-blind safety.
 
 | Status | Upwork status | Meaning |
 |---|---|---|
@@ -49,7 +51,7 @@ Vercel Cron (daily) ──► /api/sync ──► Upwork GraphQL (vendorProposal
                                    private Blob: snapshot.json ──► / (the board)
 ```
 
-- **Next.js 16** (App Router, TypeScript), no UI framework, all hand-written CSS
+- **Next.js 16** (App Router, TypeScript), hand-written CSS and SVG charts (no chart library)
 - **Upwork GraphQL API** with OAuth 2.0 (authorization code + refresh tokens)
 - **Vercel Blob** (private) for tokens and snapshots, **Vercel Cron** for daily syncs
 - **Vitest** for the privacy and stats logic
@@ -76,13 +78,14 @@ The first sync runs immediately, then daily via Vercel Cron. To sync manually, v
 ## Project structure
 
 ```
-app/page.tsx            The dashboard: flight deck, proposals table, route, log, boarding pass
+app/page.tsx            Page shell: header, demo notice, footer
+components/Dashboard    Filters, KPI tiles, and the chart grid
+components/charts       Weekly column chart, bar lists, KPI tile, tooltips
+components/ProposalsTable  Status tabs, sorting, paging
 app/api/connect         Starts Upwork OAuth (owner only)
 app/api/callback        Saves tokens, runs the first sync
 app/api/sync            Daily sync (Vercel Cron) or manual with ?key=
-components/Board        Proposals table: filters, sorting, paging
-components/Instruments  Dials, odometers, route map, flight log, boarding pass
 lib/upwork.ts           OAuth + GraphQL client
 lib/sanitize.ts         The privacy filter
-lib/stats.ts            Rates, funnel, weekly volume
+lib/stats.ts            Rates, funnel, weekly activity, status counts
 ```

@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 
-export interface BoardRow {
+/** Dates are pre-formatted in the owner's time zone so every visitor sees the same values. */
+export interface ProposalRow {
   ref: string;
   appliedAt: number;
   appliedDate: string;
@@ -39,18 +40,12 @@ const COLUMNS: { key: SortKey | "ref"; label: string; className?: string }[] = [
   { key: "ref", label: "Ref #", className: "cell--ref" },
 ];
 
-export function Board({ rows }: { rows: BoardRow[] }) {
+export function ProposalsTable({ rows }: { rows: ProposalRow[] }) {
   const [filter, setFilter] = useState<FilterId>("all");
-  const [category, setCategory] = useState("all");
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "appliedAt", dir: -1 });
   const [page, setPage] = useState(0);
 
-  const categories = useMemo(() => [...new Set(rows.map((r) => r.category))].sort(), [rows]);
-
-  const inCategory = useMemo(
-    () => (category === "all" ? rows : rows.filter((r) => r.category === category)),
-    [rows, category]
-  );
+  const inCategory = rows;
 
   const counts = useMemo(() => {
     const c: Record<FilterId, number> = { all: inCategory.length, air: 0, connected: 0, closed: 0 };
@@ -79,36 +74,14 @@ export function Board({ rows }: { rows: BoardRow[] }) {
   }
 
   return (
-    <section className="proposals" aria-labelledby="proposals-title">
-      <div className="proposals__head">
-        <h2 id="proposals-title" className="section-sign">
-          <span className="section-sign__num">
-            <svg viewBox="0 0 48 48" aria-hidden="true">
-              <path d="M41.6 14.2c-.7-1.6-2.6-2.3-4.2-1.6L29 16.5 16.8 10.8l-3.6 1.6 8.4 7.3-7.4 3.4-4.4-2.4-2.8 1.3 4.6 6.5c.5.7 1.5 1 2.3.6l26.1-12.1c1.6-.7 2.3-2.6 1.6-4.2z" />
-            </svg>
-          </span>
+    <section className="card card--flush" aria-labelledby="proposals-title">
+      <div className="card__head">
+        <h2 id="proposals-title" className="card__title">
           Proposals
         </h2>
-        <label className="select">
-          <span className="visually-hidden">Job category</span>
-          <select
-            value={category}
-            onChange={(e) => {
-              setCategory(e.target.value);
-              setPage(0);
-            }}
-          >
-            <option value="all">All categories</option>
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </label>
       </div>
 
-      <div className="table-card">
+      <div>
         <div className="tabs" role="tablist" aria-label="Filter by status">
           {FILTERS.map((f) => (
             <button
@@ -163,8 +136,8 @@ export function Board({ rows }: { rows: BoardRow[] }) {
                   </td>
                   <td data-label="Pay type">{r.pay}</td>
                   <td data-label="Status">
-                    <span className={`pill pill--${r.lamp}`}>
-                      <span className="pill__dot" aria-hidden="true" />
+                    <span className={`status status--${r.lamp}`}>
+                      <span className="status__dot" aria-hidden="true" />
                       {r.status}
                     </span>
                   </td>
@@ -192,13 +165,13 @@ export function Board({ rows }: { rows: BoardRow[] }) {
             {visible.length === 0 ? "0" : `${start + 1}–${start + pageRows.length}`} of {visible.length}
           </span>
           <div className="pager__buttons">
-            <button className="key key--icon" aria-label="Previous page" disabled={current === 0} onClick={() => setPage(current - 1)}>
+            <button className="btn btn--icon" aria-label="Previous page" disabled={current === 0} onClick={() => setPage(current - 1)}>
               ‹
             </button>
             <span className="pager__page">
               Page {current + 1} of {pages}
             </span>
-            <button className="key key--icon" aria-label="Next page" disabled={current >= pages - 1} onClick={() => setPage(current + 1)}>
+            <button className="btn btn--icon" aria-label="Next page" disabled={current >= pages - 1} onClick={() => setPage(current + 1)}>
               ›
             </button>
           </div>
