@@ -18,7 +18,7 @@ export const UPWORK_STATUS_TO_STAGE: Record<string, Stage | undefined> = {
 export const UPWORK_STATUSES = Object.keys(UPWORK_STATUS_TO_STAGE);
 
 interface StageInfo {
-  /** Text on the split-flap REMARKS column (max 10 chars) */
+  /** Text on the split-flap STATUS column (max 9 chars) */
   remark: string;
   /** Lamp colour on the board */
   lamp: "amber" | "white" | "green" | "cyan" | "red" | "dim";
@@ -31,10 +31,10 @@ interface StageInfo {
 }
 
 export const STAGES: Record<Stage, StageInfo> = {
-  checkin: { remark: "CHECK-IN", lamp: "amber", meaning: "Submitted, Upwork is still validating", connected: false, closed: false },
-  enroute: { remark: "EN ROUTE", lamp: "white", meaning: "Sent — waiting to hear back", connected: false, closed: false },
+  checkin: { remark: "PENDING", lamp: "amber", meaning: "Just sent — Upwork is still processing it", connected: false, closed: false },
+  enroute: { remark: "WAITING", lamp: "white", meaning: "Sent — waiting to hear back from the client", connected: false, closed: false },
   contact: { remark: "REPLIED", lamp: "cyan", meaning: "Client started a conversation", connected: true, closed: false },
-  approach: { remark: "OFFER IN", lamp: "cyan", meaning: "Client sent an offer", connected: true, closed: false },
+  approach: { remark: "OFFER", lamp: "cyan", meaning: "Client sent an offer", connected: true, closed: false },
   landed: { remark: "HIRED", lamp: "green", meaning: "Won the job", connected: true, closed: true },
   cancelled: { remark: "DECLINED", lamp: "red", meaning: "Client passed", connected: false, closed: true },
   diverted: { remark: "NO REPLY", lamp: "dim", meaning: "Job closed without a response", connected: false, closed: true },

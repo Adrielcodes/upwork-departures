@@ -24,13 +24,13 @@ function toHour(iso: string): string {
 
 function flightNumber(id: string, salt: string): string {
   const digest = createHmac("sha256", salt).update(id).digest();
-  return `AR ${(digest.readUInt32BE(0) % 9000) + 1000}`;
+  return `#${(digest.readUInt32BE(0) % 9000) + 1000}`;
 }
 
 function gate(contractType?: string | null): Gate {
-  if (contractType === "HOURLY") return "HRLY";
-  if (contractType === "FIXED") return "FIXD";
-  return "----";
+  if (contractType === "HOURLY") return "HOURLY";
+  if (contractType === "FIXED") return "FIXED";
+  return "";
 }
 
 function destination(category?: string | null): string {

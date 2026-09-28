@@ -49,7 +49,7 @@ export default async function Page() {
             </span>
             <div>
               <h1>Departures</h1>
-              <p>Upwork proposals · Terminal AR</p>
+              <p>Every Upwork proposal I&apos;ve sent</p>
             </div>
           </div>
           <div className="sign__right">
@@ -64,7 +64,7 @@ export default async function Page() {
           <div className="ticker__track">
             {Array.from({ length: 2 }, (_, i) => (
               <span key={i} aria-hidden={i === 1}>
-                ● Demo flights: sample data until Upwork approves the API key &nbsp;&nbsp; ● Real proposals will replace these
+                ● Demo data: sample proposals until Upwork approves the API key &nbsp;&nbsp; ● Real proposals will replace these
                 automatically &nbsp;&nbsp; ● Client names, job titles, rates and cover letters are never shown &nbsp;&nbsp;
               </span>
             ))}
@@ -84,7 +84,7 @@ export default async function Page() {
             <Dial value={stats.hireRate} scaleMax={0.2} label="Hire rate" caption={`${stats.hired} landed`} />
             {stats.viewRate !== null && <Dial value={stats.viewRate} label="Viewed" caption="Opened by the client" />}
             <Odometer value={stats.last30} label="Sent" caption="Last 30 days" />
-            <Odometer value={stats.inTheAir} label="In the air" caption="Waiting to hear back" />
+            <Odometer value={stats.inTheAir} label="Waiting" caption="Proposals waiting on a reply" />
           </div>
         </section>
 

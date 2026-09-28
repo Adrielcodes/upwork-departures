@@ -13,10 +13,10 @@ export type Stage =
   | "diverted" // Archived: the job closed without a response
   | "grounded"; // Withdrawn by me
 
-export type Gate = "HRLY" | "FIXD" | "----";
+export type Gate = "HOURLY" | "FIXED" | "";
 
 export interface Flight {
-  /** Salted hash of the proposal id — stable, but can't be traced back to the job */
+  /** Reference number: a salted hash of the proposal id — stable, but can't be traced back to the job */
   flight: string;
   /** Submission time, rounded down to the hour */
   departedAt: string;

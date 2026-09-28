@@ -18,21 +18,21 @@ const ROWS_PER_PAGE = 10;
 const PAGE_SECONDS = 14;
 
 const FILTERS = [
-  { id: "all", label: "All flights" },
-  { id: "air", label: "In the air" },
-  { id: "connected", label: "Connected" },
+  { id: "all", label: "All" },
+  { id: "air", label: "Waiting" },
+  { id: "connected", label: "Got a reply" },
   { id: "closed", label: "Closed" },
 ] as const;
 
 type FilterId = (typeof FILTERS)[number]["id"];
 
 const COLUMNS = [
-  { key: "date", label: "Date", width: 6, className: "col--date" },
+  { key: "date", label: "Applied", width: 6, className: "col--date" },
   { key: "time", label: "Time", width: 5, className: "col--time" },
-  { key: "flight", label: "Flight", width: 7, className: "col--flight" },
-  { key: "destination", label: "Destination", width: 24, className: "col--dest" },
-  { key: "gate", label: "Gate", width: 4, className: "col--gate" },
-  { key: "remark", label: "Remarks", width: 9, className: "col--remark" },
+  { key: "flight", label: "Ref #", width: 5, className: "col--flight" },
+  { key: "destination", label: "Job category", width: 24, className: "col--dest" },
+  { key: "gate", label: "Pay type", width: 6, className: "col--gate" },
+  { key: "remark", label: "Status", width: 9, className: "col--remark" },
 ] as const;
 
 export function Board({ rows }: { rows: BoardRow[] }) {
@@ -55,7 +55,10 @@ export function Board({ rows }: { rows: BoardRow[] }) {
   const padded = [...pageRows, ...Array(ROWS_PER_PAGE - pageRows.length).fill(null)] as (BoardRow | null)[];
 
   return (
-    <section className="board" aria-label="Departures board: my Upwork proposals">
+    <section className="board" aria-label="My Upwork proposals">
+      <p className="board__caption">
+        Each row is a proposal I sent on Upwork: when I applied, the job category, how it pays, and where it stands now.
+      </p>
       <div className="board__controls">
         <div className="board__filters" role="tablist" aria-label="Filter flights">
           {FILTERS.map((f) => (
@@ -119,7 +122,7 @@ export function Board({ rows }: { rows: BoardRow[] }) {
 
         <div className="board__footer">
           <SplitFlap text={`PAGE ${current + 1} OF ${pages}`} width={12} delay={400} />
-          <span className="board__count">{visible.length} flights</span>
+          <span className="board__count">{visible.length} proposals</span>
         </div>
       </div>
     </section>

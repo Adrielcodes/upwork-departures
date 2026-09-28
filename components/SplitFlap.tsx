@@ -5,7 +5,7 @@ import { clack } from "@/lib/sound";
 
 // The order characters are printed on a real flap drum. Each cell steps through
 // this sequence until it reaches its target, just like the mechanical boards.
-const DRUM = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.:/&',";
+const DRUM = " ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-.:/&',#";
 const FLIP_MS = 62;
 
 function drumIndex(ch: string) {

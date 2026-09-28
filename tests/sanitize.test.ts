@@ -29,7 +29,7 @@ describe("sanitize", () => {
 
   it("scrambles ids into flight numbers that depend on the salt", () => {
     const a = sanitize([base], "salt-a")[0].flight;
-    expect(a).toMatch(/^AR \d{4}$/);
+    expect(a).toMatch(/^#\d{4}$/);
     expect(sanitize([base], "salt-a")[0].flight).toBe(a);
     expect(sanitize([base], "salt-b")[0].flight).not.toBe(a);
   });
@@ -57,11 +57,11 @@ describe("sanitize", () => {
     expect(sanitize([{ ...base, category: null }], "s")[0].destination).toBe("GENERAL");
   });
 
-  it("maps contract types to gates", () => {
+  it("maps contract types to pay types", () => {
     const gate = (contractType: string | null) => sanitize([{ ...base, contractType }], "s")[0].gate;
-    expect(gate("HOURLY")).toBe("HRLY");
-    expect(gate("FIXED")).toBe("FIXD");
-    expect(gate(null)).toBe("----");
+    expect(gate("HOURLY")).toBe("HOURLY");
+    expect(gate("FIXED")).toBe("FIXED");
+    expect(gate(null)).toBe("");
   });
 });
 

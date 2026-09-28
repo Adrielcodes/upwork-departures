@@ -280,6 +280,13 @@ a {
 
 /* ─── Departures board ──────────────────────────────────────── */
 
+.board__caption {
+  margin: 0 0 14px;
+  font-size: 1.02rem;
+  color: var(--muted);
+  max-width: 70ch;
+}
+
 .board__controls {
   display: flex;
   justify-content: space-between;
@@ -348,7 +355,7 @@ a {
   width: calc(var(--chars) * var(--cw) + (var(--chars) - 1) * 2px);
   font-family: var(--font-signage), sans-serif;
   font-weight: 600;
-  font-size: clamp(0.7rem, calc(var(--cw) * 0.72), 0.95rem);
+  font-size: clamp(0.78rem, calc(var(--cw) * 0.82), 1.05rem);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--yellow);
